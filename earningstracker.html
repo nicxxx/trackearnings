@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Earnings Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #f2f2f2;
+    }
+    .counter {
+      font-size: 2rem;
+      margin-top: 20px;
+    }
+    button, input {
+      font-size: 1.1rem;
+      padding: 10px;
+      margin: 10px;
+    }
+    .input-group {
+      margin-top: 30px;
+    }
+    label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Earnings Tracker</h1>
+  <p>Hourly Rate: <strong>€102</strong> &mdash; 8-hour workday</p>
+
+  <div class="counter">
+    <p>Work Time: <span id="time">00:00:00</span></p>
+    <p>Earned: <span id="earnings">€0.00</span></p>
+  </div>
+
+  <button id="startBtn">Start</button>
+  <button id="toggleBtn" disabled>Pause</button>
+
+  <div class="input-group">
+    <div>
+      <label for="extraHours">Add previously worked hours:</label><br />
+      <input type="number" id="extraHours" min="0" step="0.25" placeholder="e.g. 1.5">
+      <button id="addTimeBtn">Add Time</button>
+    </div>
+
+    <div>
+      <label for="removeHours">Subtract hours:</label><br />
+      <input type="number" id="removeHours" min="0" step="0.25" placeholder="e.g. 0.5">
+      <button id="removeTimeBtn">Remove Time</button>
+    </div>
+  </div>
+
+  <script>
+    const earningsPerSecond = 102 / 3600; // €102 per hour
+    const maxSeconds = 8 * 3600;
+    let elapsedSeconds = 0;
+    let isRunning = false;
+    let interval = null;
+
+    const timeDisplay = document.getElementById("time");
+    const earningsDisplay = document.getElementById("earnings");
+    const startBtn = document.getElementById("startBtn");
+    const toggleBtn = document.getElementById("toggleBtn");
+
+    const extraHoursInput = document.getElementById("extraHours");
+    const addTimeBtn = document.getElementById("addTimeBtn");
+
+    const removeHoursInput = document.getElementById("removeHours");
+    const removeTimeBtn = document.getElementById("removeTimeBtn");
+
+    function formatTime(seconds) {
+      const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function updateDisplay() {
+      timeDisplay.textContent = formatTime(elapsedSeconds);
+      const earnings = (elapsedSeconds * earningsPerSecond).toFixed(2);
+      earningsDisplay.textContent = `€${earnings}`;
+    }
+
+    function startCounter() {
+      interval = setInterval(() => {
+        if (isRunning && elapsedSeconds < maxSeconds) {
+          elapsedSeconds++;
+          updateDisplay();
+        } else if (elapsedSeconds >= maxSeconds) {
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (!interval) {
+        isRunning = true;
+        startCounter();
+        toggleBtn.disabled = false;
+        startBtn.disabled = true;
+      }
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      isRunning = !isRunning;
+      toggleBtn.textContent = isRunning ? "Pause" : "Resume";
+    });
+
+    addTimeBtn.addEventListener("click", () => {
+      const extraHours = parseFloat(extraHoursInput.value);
+      if (!isNaN(extraHours) && extraHours > 0) {
+        const additionalSeconds = Math.floor(extraHours * 3600);
+        elapsedSeconds += additionalSeconds;
+        if (elapsedSeconds > maxSeconds) elapsedSeconds = maxSeconds;
+        updateDisplay();
+        extraHoursInput.value = "";
+      }
+    });
+
+    removeTimeBtn.addEventListener("click", () => {
+      const removeHours = parseFloat(removeHoursInput.value);
+      if (!isNaN(removeHours) && removeHours > 0) {
+        const subtractSeconds = Math.floor(removeHours * 3600);
+        elapsedSeconds = Math.max(0, elapsedSeconds - subtractSeconds);
+        updateDisplay();
+        removeHoursInput.value = "";
+      }
+    });
+
+    updateDisplay(); // Initial display
+  </script>
+
+</body>
+</html>
