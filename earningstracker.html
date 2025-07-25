@@ -31,7 +31,11 @@
 <body>
 
   <h1>Earnings Tracker</h1>
-  <p>Hourly Rate: <strong>€102</strong> &mdash; 8-hour workday</p>
+
+  <div class="input-group">
+    <label for="hourlyRate">Set your hourly rate (€):</label><br />
+    <input type="number" id="hourlyRate" min="0" step="0.01" value="102">
+  </div>
 
   <div class="counter">
     <p>Work Time: <span id="time">00:00:00</span></p>
@@ -43,21 +47,19 @@
 
   <div class="input-group">
     <div>
-      <label for="extraHours">Add previously worked hours:</label><br />
-      <input type="number" id="extraHours" min="0" step="0.25" placeholder="e.g. 1.5">
+      <label for="extraMinutes">Add previously worked minutes:</label><br />
+      <input type="number" id="extraMinutes" min="0" step="1" placeholder="e.g. 30">
       <button id="addTimeBtn">Add Time</button>
     </div>
 
     <div>
-      <label for="removeHours">Subtract hours:</label><br />
-      <input type="number" id="removeHours" min="0" step="0.25" placeholder="e.g. 0.5">
+      <label for="removeMinutes">Subtract minutes:</label><br />
+      <input type="number" id="removeMinutes" min="0" step="1" placeholder="e.g. 15">
       <button id="removeTimeBtn">Remove Time</button>
     </div>
   </div>
 
   <script>
-    const earningsPerSecond = 102 / 3600; // €102 per hour
-    const maxSeconds = 8 * 3600;
     let elapsedSeconds = 0;
     let isRunning = false;
     let interval = null;
@@ -66,11 +68,12 @@
     const earningsDisplay = document.getElementById("earnings");
     const startBtn = document.getElementById("startBtn");
     const toggleBtn = document.getElementById("toggleBtn");
+    const hourlyRateInput = document.getElementById("hourlyRate");
 
-    const extraHoursInput = document.getElementById("extraHours");
+    const extraMinutesInput = document.getElementById("extraMinutes");
     const addTimeBtn = document.getElementById("addTimeBtn");
 
-    const removeHoursInput = document.getElementById("removeHours");
+    const removeMinutesInput = document.getElementById("removeMinutes");
     const removeTimeBtn = document.getElementById("removeTimeBtn");
 
     function formatTime(seconds) {
@@ -80,19 +83,22 @@
       return `${hrs}:${mins}:${secs}`;
     }
 
+    function getEarningsPerSecond() {
+      const rate = parseFloat(hourlyRateInput.value);
+      return isNaN(rate) || rate <= 0 ? 0 : rate / 3600;
+    }
+
     function updateDisplay() {
       timeDisplay.textContent = formatTime(elapsedSeconds);
-      const earnings = (elapsedSeconds * earningsPerSecond).toFixed(2);
+      const earnings = (elapsedSeconds * getEarningsPerSecond()).toFixed(2);
       earningsDisplay.textContent = `€${earnings}`;
     }
 
     function startCounter() {
       interval = setInterval(() => {
-        if (isRunning && elapsedSeconds < maxSeconds) {
+        if (isRunning) {
           elapsedSeconds++;
           updateDisplay();
-        } else if (elapsedSeconds >= maxSeconds) {
-          clearInterval(interval);
         }
       }, 1000);
     }
@@ -112,23 +118,22 @@
     });
 
     addTimeBtn.addEventListener("click", () => {
-      const extraHours = parseFloat(extraHoursInput.value);
-      if (!isNaN(extraHours) && extraHours > 0) {
-        const additionalSeconds = Math.floor(extraHours * 3600);
+      const extraMinutes = parseFloat(extraMinutesInput.value);
+      if (!isNaN(extraMinutes) && extraMinutes > 0) {
+        const additionalSeconds = Math.floor(extraMinutes * 60);
         elapsedSeconds += additionalSeconds;
-        if (elapsedSeconds > maxSeconds) elapsedSeconds = maxSeconds;
         updateDisplay();
-        extraHoursInput.value = "";
+        extraMinutesInput.value = "";
       }
     });
 
     removeTimeBtn.addEventListener("click", () => {
-      const removeHours = parseFloat(removeHoursInput.value);
-      if (!isNaN(removeHours) && removeHours > 0) {
-        const subtractSeconds = Math.floor(removeHours * 3600);
+      const removeMinutes = parseFloat(removeMinutesInput.value);
+      if (!isNaN(removeMinutes) && removeMinutes > 0) {
+        const subtractSeconds = Math.floor(removeMinutes * 60);
         elapsedSeconds = Math.max(0, elapsedSeconds - subtractSeconds);
         updateDisplay();
-        removeHoursInput.value = "";
+        removeMinutesInput.value = "";
       }
     });
 
